@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>あさのおしたくボード</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'M PLUS Rounded 1c', sans-serif; }
+        /* カスタムスクロールバーの非表示 */
+        ::-webkit-scrollbar { display: none; }
+        
+        /* 完了時の発光アニメーション */
+        @keyframes successGlow {
+            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); transform: scale(1); }
+            50% { box-shadow: 0 0 20px 10px rgba(74, 222, 128, 0); transform: scale(1.02); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); transform: scale(1); }
+        }
+        .task-success { animation: successGlow 0.8s ease-out; }
+
+        /* ジャンプアニメーション */
+        @keyframes jump {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-15px) scale(1.1); }
+        }
+        .animate-jump { animation: jump 0.5s ease-in-out; }
+
+        /* やっているよ！の点滅アニメーション */
+        @keyframes pulse-orange {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
+            50% { box-shadow: 0 0 15px 5px rgba(249, 115, 22, 0.2); }
+        }
+        .task-doing {
+            border: 2px solid #f97316;
+            background-color: #fffaf0;
+            animation: pulse-orange 2s infinite;
+        }
+        .time-doing {
+            color: #ea580c;
+            transform: scale(1.1);
+            transition: all 0.3s;
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen font-sans text-gray-800 transition-colors duration-500 pb-10" id="body-bg">
+    
+    <div class="max-w-md mx-auto p-4 flex flex-col gap-4">
+        <!-- ヘッダー -->
+        <div id="header-bg" class="rounded-3xl p-5 text-white shadow-lg transition-colors duration-500 relative overflow-hidden">
+            <div class="flex justify-between items-start gap-2">
+                <!-- 左側：大きな日付とバッジ -->
+                <div class="flex flex-col gap-2 z-10 w-[55%]">
+                    <div id="date-display" class="text-3xl sm:text-4xl font-black tracking-tight drop-shadow-md"></div>
+                    <div class="flex flex-col gap-1.5 items-start">
+                        <div id="today-badge" class="bg-white/95 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm text-left"></div>
+                        <div id="sekki-badge" class="bg-white/95 text-green-700 text-[11px] font-bold px-3 py-1.5 rounded-full shadow-sm text-left"></div>
+                    </div>
+                </div>
+                
+                <!-- 右側：時間と天気 -->
+                <div class="flex flex-col gap-1 items-end z-10 w-[45%]">
+                    <div id="time-display" class="text-4xl sm:text-5xl font-black drop-shadow-md tracking-wider"></div>
+                    <div class="bg-white/95 text-gray-700 px-2 py-1.5 rounded-xl shadow-sm flex flex-col items-end text-sm mt-1 w-full max-w-[130px]">
+                        <div class="flex items-center gap-1 font-bold w-full justify-end">
+                            <span id="location-name" class="text-[10px] text-gray-500 bg-gray-100 px-1 py-0.5 rounded truncate max-w-[60px]">📍 品川区</span>
+                            <span id="weather-icon" class="text-base">☀️</span>
+                            <span id="current-temp" class="text-base">--°C</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-[10px] text-gray-500 mt-0.5 justify-end w-full">
+                            <span title="最低気温">⬇️<span id="min-temp">--</span></span>
+                            <span title="最高気温">⬆️<span id="max-temp">--</span></span>
+                            <span title="降水確率">☔<span id="pop">--</span>%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 応援隊バッジ -->
+            <div class="mt-4 bg-white/20 rounded-2xl p-3 flex items-center justify-between backdrop-blur-sm border border-white/30 z-10 relative">
+                 <div class="flex flex-col">
+                     <span class="text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full self-start mb-1 shadow-sm font-bold">📣こんげつのおうえんたい</span>
+                     <span id="mascot-name" class="font-bold text-sm drop-shadow-sm"></span>
+                 </div>
+                 <div class="border-l border-white/30 pl-3">
+                     <span id="mascot-emoji" class="text-4xl filter drop-shadow-md block origin-bottom transition-transform"></span>
+                 </div>
+            </div>
+        </div>
+
+        <!-- はじめるじかん -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+            <label for="start-time" class="font-bold text-gray-700 text-lg">はじめるじかん：</label>
+            <input type="time" id="start-time" class="text-2xl font-black bg-gray-100 rounded-xl px-3 py-2 border-none focus:ring-2 focus:ring-blue-400 outline-none">
+        </div>
+
+        <!-- タスクリスト -->
+        <div id="task-list" class="flex flex-col gap-3"></div>
+
+        <!-- 新しいタスクを追加 -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 border-dashed mt-2">
+            <div class="text-sm font-bold text-gray-500 mb-3">+ あたらしいことをついか</div>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <input type="text" id="new-task-name" placeholder="やりたいこと" class="flex-grow bg-gray-50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 font-bold">
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <div class="flex items-center bg-gray-50 rounded-xl px-3 border border-gray-100 flex-grow sm:flex-grow-0 justify-center">
+                        <input type="number" id="new-task-time" value="5" min="1" class="w-12 bg-transparent text-center font-bold text-lg outline-none">
+                        <span class="text-gray-500 text-sm font-bold">分</span>
+                    </div>
+                    <button onclick="addTask()" class="bg-blue-500 text-white font-bold px-5 py-3 rounded-xl whitespace-nowrap active:scale-95 transition-transform shadow-md">ついか</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 地域設定 -->
+        <div class="mt-2 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <button onclick="toggleSettings()" class="w-full bg-gray-50 p-4 flex justify-between items-center font-bold text-gray-600 outline-none">
+                <span class="flex items-center gap-2"><span>⚙️</span> おてんきの地域設定</span>
+                <span id="settings-arrow">▼</span>
+            </button>
+            <div id="settings-content" class="p-4 hidden border-t border-gray-100 bg-white">
+                <p class="text-xs text-gray-500 mb-2 font-bold">郵便番号（ハイフンなし7桁）を入力して「さがす」を押してね。</p>
+                <div class="flex gap-2">
+                    <input type="number" id="zip-input" placeholder="例: 1400001" class="flex-grow bg-gray-50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 tracking-widest font-bold">
+                    <button onclick="updateLocationByZip()" class="bg-blue-500 text-white font-bold px-4 py-3 rounded-xl whitespace-nowrap active:scale-95 transition-transform">さがす</button>
+                </div>
+                <p id="zip-message" class="text-xs mt-2 font-bold"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ポップアップ絵文字 -->
+    <div id="popup-emoji" class="fixed inset-0 pointer-events-none flex items-center justify-center z-50 opacity-0 scale-0 transition-all duration-300">
+        <span id="popup-emoji-char" class="text-[120px] drop-shadow-2xl"></span>
+    </div>
+
+    <!-- 紙吹雪キャンバス -->
+    <canvas id="confetti" class="fixed inset-0 pointer-events-none z-40"></canvas>
+
+    <script>
+        // デフォルトデータ
+        const defaultTasks = [
+            { id: 1, text: "トイレ・かおあらい", time: 5, checked: false },
+            { id: 2, text: "きがえ", time: 10, checked: false },
+            { id: 3, text: "あさごはん", time: 25, checked: false },
+            { id: 4, text: "はみがき", time: 5, checked: false },
+            { id: 5, text: "🚪 しゅっぱつ", time: 5, checked: false }
+        ];
+
+        // 状態管理
+        let appData = {
+            tasks: [],
+            startTime: "07:00",
+            lastDate: "",
+            location: { name: "品川区", lat: 35.6092, lon: 139.7302 }
+        };
+        let isDoingId = null;
+
+        // データ読み込み＆リセット処理
+        function loadData() {
+            const saved = localStorage.getItem('oshitakuData');
+            const todayStr = new Date().toDateString();
+
+            if (saved) {
+                appData = JSON.parse(saved);
+                // 翌日になったらチェックと実行中状態をリセット
+                if (appData.lastDate !== todayStr) {
+                    appData.tasks.forEach(t => t.checked = false);
+                    appData.lastDate = todayStr;
+                    isDoingId = null; 
+                    saveData();
+                }
+            } else {
+                appData.tasks = [...defaultTasks];
+                appData.lastDate = todayStr;
+                saveData();
+            }
+            document.getElementById('start-time').value = appData.startTime;
+            document.getElementById('location-name').textContent = `📍 ${appData.location.name}`;
+        }
+
+        function saveData() {
+            localStorage.setItem('oshitakuData', JSON.stringify(appData));
+        }
+
+        // 時間計算
+        function calculateTimes() {
+            const [hours, minutes] = appData.startTime.split(':').map(Number);
+            let currentTime = new Date();
+            currentTime.setHours(hours, minutes, 0, 0);
+
+            const timeDisplays = document.querySelectorAll('.target-time');
+            const doingDisplays = document.querySelectorAll('.doing-time-text');
+
+            appData.tasks.forEach((task, index) => {
+                currentTime.setMinutes(currentTime.getMinutes() + task.time);
+                const h = currentTime.getHours().toString().padStart(2, '0');
+                const m = currentTime.getMinutes().toString().padStart(2, '0');
+                const timeStr = `${h}:${m}`;
+                
+                if (timeDisplays[index]) timeDisplays[index].textContent = timeStr;
+                if (doingDisplays[index] && isDoingId === task.id) {
+                    doingDisplays[index].textContent = timeStr;
+                }
+            });
+        }
+
+        // やっているよ切り替え
+        function toggleDoing(taskId) {
+            const task = appData.tasks.find(t => t.id === taskId);
+            if (task.checked) return; // 完了済みの場合は無視
+
+            if (isDoingId === taskId) {
+                isDoingId = null; // 解除
+            } else {
+                isDoingId = taskId; // セット
+            }
+            renderTasks();
+        }
+
+        // タスク描画
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+
+            appData.tasks.forEach((task, index) => {
+                const isDoing = isDoingId === task.id;
+                
+                const taskEl = document.createElement('div');
+                taskEl.className = `flex items-center gap-2 bg-white rounded-2xl p-3 shadow-sm transition-all duration-300 ${task.checked ? 'opacity-60' : ''} ${isDoing ? 'task-doing' : ''}`;
+                taskEl.dataset.id = task.id;
+
+                taskEl.innerHTML = `
+                    <!-- 矢印ドラッグハンドル -->
+                    <div class="drag-handle flex flex-col items-center justify-center bg-gray-50 rounded-lg py-1 px-1.5 text-gray-400 cursor-grab active:cursor-grabbing w-8">
+                        <button onclick="moveTask(${index}, -1)" class="w-full text-center hover:bg-gray-200 rounded pb-1">▲</button>
+                        <div class="text-[8px] tracking-widest opacity-50 py-1">•••</div>
+                        <button onclick="moveTask(${index}, 1)" class="w-full text-center hover:bg-gray-200 rounded pt-1">▼</button>
+                    </div>
+
+                    <!-- チェックボタン -->
+                    <button onclick="toggleCheck(${task.id})" class="flex-shrink-0 w-12 h-12 rounded-full border-4 flex items-center justify-center transition-colors ${task.checked ? 'border-green-400 bg-green-400' : 'border-gray-200 bg-gray-50'}">
+                        ${task.checked ? '<span class="text-white text-2xl font-bold">✓</span>' : ''}
+                    </button>
+
+                    <!-- 内容 -->
+                    <div class="flex-grow flex flex-col pl-1 min-w-0">
+                        <span class="font-bold text-lg truncate ${task.checked ? 'line-through text-gray-400' : 'text-gray-800'}">${task.text}</span>
+                        <div class="flex items-center gap-2 mt-1">
+                            <!-- 時間変更 -->
+                            <div class="flex items-center bg-gray-100 rounded-lg overflow-hidden whitespace-nowrap w-[4.5rem]">
+                                <button onclick="changeTime(${task.id}, -1)" class="w-6 bg-gray-200 text-gray-600 font-bold active:bg-gray-300">-</button>
+                                <span class="flex-grow text-center text-sm font-bold bg-white">${task.time}<span class="text-[10px] text-gray-500">分</span></span>
+                                <button onclick="changeTime(${task.id}, 1)" class="w-6 bg-gray-200 text-gray-600 font-bold active:bg-gray-300">+</button>
+                            </div>
+                            
+                            <!-- はじめるボタン -->
+                            ${!task.checked ? `
+                                <button onclick="toggleDoing(${task.id})" class="text-xs font-bold px-2 py-1 rounded-lg transition-colors ${isDoing ? 'bg-orange-100 text-orange-600 border border-orange-300' : 'bg-blue-50 text-blue-600 border border-blue-100 active:bg-blue-100'}">
+                                    ${isDoing ? '🏃 やっているよ！' : '▶️ はじめる'}
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- おわりの時間・削除 -->
+                    <div class="flex flex-col items-end gap-1 flex-shrink-0 w-16">
+                        <span class="text-[10px] font-bold text-gray-400">おわり</span>
+                        <span class="target-time text-lg font-black tracking-tighter ${isDoing ? 'time-doing' : (task.checked ? 'text-gray-400' : 'text-red-500')}">--:--</span>
+                        <button onclick="deleteTask(${task.id})" class="text-[10px] text-gray-400 mt-1 flex items-center gap-1 active:text-red-500">
+                            🗑️けす
+                        </button>
+                    </div>
+                `;
+                list.appendChild(taskEl);
+            });
+            calculateTimes();
+        }
+
+        // 順番移動ボタン処理
+        function moveTask(index, direction) {
+            if (direction === -1 && index > 0) {
+                const temp = appData.tasks[index];
+                appData.tasks[index] = appData.tasks[index - 1];
+                appData.tasks[index - 1] = temp;
+            } else if (direction === 1 && index < appData.tasks.length - 1) {
+                const temp = appData.tasks[index];
+                appData.tasks[index] = appData.tasks[index + 1];
+                appData.tasks[index + 1] = temp;
+            }
+            saveData();
+            renderTasks();
+        }
+
+        function toggleCheck(id) {
+            const task = appData.tasks.find(t => t.id === id);
+            task.checked = !task.checked;
+            
+            // 完了にした場合、「やっているよ」を解除してアニメーション
+            if (task.checked) {
+                if(isDoingId === id) isDoingId = null;
+                const taskEl = document.querySelector(`[data-id="${id}"]`);
+                taskEl.classList.add('task-success');
+                setTimeout(() => taskEl.classList.remove('task-success'), 800);
+                triggerConfetti();
+                showPopupEmoji();
+            }
+            saveData();
+            renderTasks();
+        }
+
+        function changeTime(id, delta) {
+            const task = appData.tasks.find(t => t.id === id);
+            task.time = Math.max(1, task.time + delta); // 最低1分
+            saveData();
+            calculateTimes();
+            renderTasks();
+        }
+
+        function deleteTask(id) {
+            if(confirm("ほんとうにけしますか？")) {
+                if(isDoingId === id) isDoingId = null;
+                appData.tasks = appData.tasks.filter(t => t.id !== id);
+                saveData();
+                renderTasks();
+            }
+        }
+
+        function addTask() {
+            const nameInput = document.getElementById('new-task-name');
+            const timeInput = document.getElementById('new-task-time');
+            const name = nameInput.value.trim();
+            const time = parseInt(timeInput.value);
+
+            if (name && time > 0) {
+                const newId = appData.tasks.length > 0 ? Math.max(...appData.tasks.map(t => t.id)) + 1 : 1;
+                appData.tasks.push({ id: newId, text: name, time: time, checked: false });
+                nameInput.value = '';
+                timeInput.value = '5';
+                saveData();
+                renderTasks();
+            }
+        }
+
+        // 地域設定メニューの開閉
+        function toggleSettings() {
+            const content = document.getElementById('settings-content');
+            const arrow = document.getElementById('settings-arrow');
+            if(content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                arrow.textContent = '▲';
+            } else {
+                content.classList.add('hidden');
+                arrow.textContent = '▼';
+            }
+        }
+
+        // HeartRails Geo API で郵便番号から地域検索
+        async function updateLocationByZip() {
+            const zip = document.getElementById('zip-input').value.replace(/-/g, '');
+            const msgEl = document.getElementById('zip-message');
+            
+            if(zip.length !== 7) {
+                msgEl.textContent = "7ケタの数字をいれてね！";
+                msgEl.className = "text-xs mt-2 font-bold text-red-500";
+                return;
+            }
+            
+            msgEl.textContent = "さがしています...";
+            msgEl.className = "text-xs mt-2 font-bold text-blue-500";
+
+            try {
+                // HeartRails Express API (郵便番号から住所・座標を取得)
+                const res = await fetch(`https://geoapi.heartrails.com/api/json?method=searchByPostal&postal=${zip}`);
+                const data = await res.json();
+                
+                if(data.response.error || !data.response.location || data.response.location.length === 0) {
+                    msgEl.textContent = "ちいきの座標がみつかりませんでした。";
+                    msgEl.className = "text-xs mt-2 font-bold text-red-500";
+                    return;
+                }
+
+                // 最初の候補を使用
+                const loc = data.response.location[0];
+                const city = loc.city; 
+                const lat = loc.y;
+                const lon = loc.x;
+
+                appData.location = { name: city, lat: lat, lon: lon };
+                saveData();
+                
+                msgEl.textContent = `${city} にせっていしました！`;
+                msgEl.className = "text-xs mt-2 font-bold text-green-600";
+                
+                document.getElementById('location-name').textContent = `📍 ${city}`;
+                fetchWeather(); // 天気を再取得
+                
+                // 少し待ってから閉じる
+                setTimeout(toggleSettings, 1500);
+
+            } catch(e) {
+                msgEl.textContent = "エラーがおきました。もういちど試してね。";
+                msgEl.className = "text-xs mt-2 font-bold text-red-500";
+            }
+        }
+
+        // ------------------ 各種UIの更新・API ------------------
+
+        // 天気予報 (Open-Meteo)
+        async function fetchWeather() {
+            const lat = appData.location.lat;
+            const lon = appData.location.lon;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                // 現在
+                const temp = Math.round(data.current.temperature_2m);
+                const code = data.current.weather_code;
+                document.getElementById('current-temp').textContent = `${temp}°C`;
+                document.getElementById('weather-icon').textContent = getWeatherEmoji(code);
+
+                // 日別（今日）
+                const max = Math.round(data.daily.temperature_2m_max[0]);
+                const min = Math.round(data.daily.temperature_2m_min[0]);
+                const pop = data.daily.precipitation_probability_max[0];
+                document.getElementById('max-temp').textContent = `${max}°C`;
+                document.getElementById('min-temp').textContent = `${min}°C`;
+                document.getElementById('pop').textContent = pop;
+
+            } catch (error) {
+                console.error('天気取得エラー', error);
+                document.getElementById('current-temp').textContent = '--°C';
+            }
+        }
+
+        function getWeatherEmoji(code) {
+            if (code <= 3) return '☀️️'; // 晴れ/くもり
+            if (code <= 48) return '☁️'; // 霧
+            if (code <= 67) return '☔'; // 雨
+            if (code <= 77) return '⛄'; // 雪
+            if (code <= 99) return '⚡'; // 雷雨
+            return '☀️';
+        }
+
+        // 記念日・24節気・マスコット・テーマ設定
+        function updateDateAndTheme() {
+            const now = new Date();
+            const month = now.getMonth() + 1;
+            const date = now.getDate();
+            const day = now.getDay();
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            
+            // 1. 日付
+            document.getElementById('date-display').textContent = `${month}月${date}日(${days[day]})`;
+            
+            // 2. 時計（1分ごとに更新）
+            setInterval(() => {
+                const d = new Date();
+                document.getElementById('time-display').textContent = 
+                    `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+            }, 1000);
+            const initialD = new Date();
+            document.getElementById('time-display').textContent = 
+                    `${initialD.getHours()}:${initialD.getMinutes().toString().padStart(2, '0')}`;
+
+            // 3. 記念日バッジ
+            const mmdd = `${month.toString().padStart(2, '0')}${date.toString().padStart(2, '0')}`;
+            const holidays = {
+                "0101": "おしょうがつ", "0214": "バレンタインデー", "0303": "ひなまつり",
+                "0505": "こどものひ", "0707": "たなばた", "1004": "てんしのひ", 
+                "1031": "ハロウィン", "1129": "いいにくのひ", "1225": "クリスマス"
+            };
+            const message = holidays[mmdd] ? `きょうは『${holidays[mmdd]}』だよ！` : "きょうも１にち げんきにがんばろう！";
+            document.getElementById('today-badge').innerHTML = `💡 ${message}`;
+
+            // 4. 24節気バッジ
+            const sekkiList = [
+                {m:2, d:4, n:"立春(りっしゅん)"}, {m:2, d:19, n:"雨水(うすい)"}, {m:3, d:5, n:"啓蟄(けいちつ)"}, {m:3, d:21, n:"春分(しゅんぶん)"},
+                {m:4, d:5, n:"清明(せいめい)"}, {m:4, d:20, n:"穀雨(こくう)"}, {m:5, d:5, n:"立夏(りっか)"}, {m:5, d:21, n:"小満(しょうまん)"},
+                {m:6, d:6, n:"芒種(ぼうしゅ)"}, {m:6, d:21, n:"夏至(げし)"}, {m:7, d:7, n:"小暑(しょうしょ)"}, {m:7, d:23, n:"大暑(たいしょ)"},
+                {m:8, d:7, n:"立秋(りっしゅう)"}, {m:8, d:23, n:"処暑(しょしょ)"}, {m:9, d:8, n:"白露(はくろ)"}, {m:9, d:23, n:"秋分(しゅんぶん)"},
+                {m:10, d:8, n:"寒露(かんろ)"}, {m:10, d:23, n:"霜降(そうこう)"}, {m:11, d:7, n:"立冬(りっとう)"}, {m:11, d:22, n:"小雪(しょうせつ)"},
+                {m:12, d:7, n:"大雪(たいせつ)"}, {m:12, d:22, n:"冬至(とうじ)"}, {m:1, d:5, n:"小寒(しょうかん)"}, {m:1, d:20, n:"大寒(だいかん)"}
+            ];
+            let currentSekki = "大寒(だいかん)";
+            for(let i = sekkiList.length - 1; i >= 0; i--) {
+                if(month > sekkiList[i].m || (month === sekkiList[i].m && date >= sekkiList[i].d)) {
+                    currentSekki = sekkiList[i].n;
+                    break;
+                }
+            }
+            document.getElementById('sekki-badge').innerHTML = `🍃 いまの24節気(にじゅうしせっき)は『${currentSekki}』`;
+
+            // 5. 応援隊マスコット
+            const mascots = [
+                {n: "ゆきだるま", e: "⛄❄️"}, {n: "オニとマメ", e: "👹🥜"}, {n: "サクラとメジロ", e: "🌸🐦"},
+                {n: "ランドセル", e: "🎒🌸"}, {n: "コイノボリ", e: "🎏🎏"}, {n: "カエルとアジサイ", e: "🐸☔"},
+                {n: "ヒマワリとセミ", e: "🌻🍉"}, {n: "クワガタとスイカ", e: "🍉🎐"}, {n: "ウサギとおツキミ", e: "🐇🌕"},
+                {n: "カボチャとコウモリ", e: "🎃🦇"}, {n: "リスとモミジ", e: "🐿️🍁"}, {n: "サンタとトナカイ", e: "🎅🦌"}
+            ];
+            const m = mascots[month - 1];
+            document.getElementById('mascot-name').textContent = m.n;
+            document.getElementById('mascot-emoji').textContent = m.e;
+            window.currentEmoji = m.e; // ポップアップ用
+
+            // 6. 曜日ごとのカラーテーマ
+            const themes = [
+                { bg: 'bg-red-50', head: 'bg-gradient-to-r from-red-500 to-rose-400' },     // 日
+                { bg: 'bg-yellow-50', head: 'bg-gradient-to-r from-yellow-500 to-amber-500' },// 月
+                { bg: 'bg-pink-50', head: 'bg-gradient-to-r from-pink-400 to-rose-400' },   // 火
+                { bg: 'bg-blue-50', head: 'bg-gradient-to-r from-cyan-400 to-blue-500' },   // 水
+                { bg: 'bg-green-50', head: 'bg-gradient-to-r from-emerald-400 to-green-500' }, // 木
+                { bg: 'bg-orange-50', head: 'bg-gradient-to-r from-orange-400 to-amber-500' }, // 金
+                { bg: 'bg-indigo-50', head: 'bg-gradient-to-r from-indigo-400 to-purple-500' } // 土
+            ];
+            
+            document.getElementById('body-bg').className = `min-h-screen font-sans text-gray-800 transition-colors duration-500 pb-10 ${themes[day].bg}`;
+            document.getElementById('header-bg').className = `rounded-3xl p-5 text-white shadow-lg transition-colors duration-500 relative overflow-hidden ${themes[day].head}`;
+        }
+
+        // --- アニメーション関連 ---
+
+        function showPopupEmoji() {
+            const popup = document.getElementById('popup-emoji');
+            const char = document.getElementById('popup-emoji-char');
+            char.textContent = window.currentEmoji;
+            
+            // 表示とアニメーション
+            popup.classList.remove('opacity-0', 'scale-0');
+            popup.classList.add('opacity-100', 'scale-100');
+            char.classList.add('animate-jump');
+            
+            setTimeout(() => {
+                popup.classList.add('opacity-0', 'scale-0');
+                popup.classList.remove('opacity-100', 'scale-100');
+                char.classList.remove('animate-jump');
+            }, 1500);
+        }
+
+        function triggerConfetti() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#ff718d', '#fdff6a', '#7afcff', '#52ff82', '#ffa052'];
+            
+            for(let i=0; i<80; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 + 100,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 20 - 10,
+                    dy: Math.random() * -15 - 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.floor(Math.random() * 10) - 10,
+                    tiltAngleInc: (Math.random() * 0.07) + 0.05,
+                    tiltAngle: 0
+                });
+            }
+
+            let frame = 0;
+            function animate() {
+                requestAnimationFrame(animate);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach(p => {
+                    p.tiltAngle += p.tiltAngleInc;
+                    p.y += (Math.cos(p.tiltAngle) + 1 + p.r / 2) / 2;
+                    p.x += Math.sin(p.tiltAngle) * 2;
+                    p.dy += 0.2; // 重力
+                    p.x += p.dx;
+                    p.y += p.dy;
+
+                    ctx.beginPath();
+                    ctx.lineWidth = p.r;
+                    ctx.strokeStyle = p.color;
+                    ctx.moveTo(p.x + p.tilt + p.r, p.y);
+                    ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+                    ctx.stroke();
+                });
+                
+                frame++;
+                if(frame > 100) ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            animate();
+        }
+
+        // 初期化処理
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            updateDateAndTheme();
+            renderTasks();
+            fetchWeather();
+
+            // はじめるじかんの変更検知
+            document.getElementById('start-time').addEventListener('change', (e) => {
+                appData.startTime = e.target.value;
+                saveData();
+                calculateTimes();
+            });
+
+            // ドラッグ＆ドロップ初期化
+            const sortable = new Sortable(document.getElementById('task-list'), {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'opacity-50',
+                onEnd: function (evt) {
+                    const item = appData.tasks.splice(evt.oldIndex, 1)[0];
+                    appData.tasks.splice(evt.newIndex, 0, item);
+                    saveData();
+                    renderTasks(); // 時間の再計算と描画
+                },
+            });
+        });
+    </script>
+</body>
+</html>
