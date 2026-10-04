@@ -9,10 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'M PLUS Rounded 1c', sans-serif; }
-        /* カスタムスクロールバーの非表示 */
         ::-webkit-scrollbar { display: none; }
         
-        /* 完了時の発光アニメーション */
         @keyframes successGlow {
             0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); transform: scale(1); }
             50% { box-shadow: 0 0 20px 10px rgba(74, 222, 128, 0); transform: scale(1.02); }
@@ -20,14 +18,12 @@
         }
         .task-success { animation: successGlow 0.8s ease-out; }
 
-        /* ジャンプアニメーション */
         @keyframes jump {
             0%, 100% { transform: translateY(0) scale(1); }
             50% { transform: translateY(-15px) scale(1.1); }
         }
         .animate-jump { animation: jump 0.5s ease-in-out; }
 
-        /* やっているよ！の点滅アニメーション */
         @keyframes pulse-orange {
             0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
             50% { box-shadow: 0 0 15px 5px rgba(249, 115, 22, 0.2); }
@@ -50,39 +46,39 @@
     <div class="max-w-md mx-auto p-4 flex flex-col gap-4">
         <!-- ヘッダー -->
         <div id="header-bg" class="rounded-3xl p-5 text-white shadow-lg transition-colors duration-500 relative overflow-hidden">
-            <div class="flex justify-between items-start gap-2">
-                <!-- 左側：大きな日付とバッジ -->
-                <div class="flex flex-col gap-2 z-10 w-[55%]">
-                    <div id="date-display" class="text-3xl sm:text-4xl font-black tracking-tight drop-shadow-md"></div>
-                    <div class="flex flex-col gap-2 items-start">
-                        <!-- 大きくした箇所: 今日は何の日、24節気 -->
-                        <div id="today-badge" class="bg-white/95 text-orange-600 text-sm font-bold px-3 py-2 rounded-full shadow-sm text-left"></div>
-                        <div id="sekki-badge" class="bg-white/95 text-green-700 text-sm font-bold px-3 py-2 rounded-full shadow-sm text-left"></div>
-                    </div>
-                </div>
+            
+            <!-- 日付と時計を最上部に並べる -->
+            <div class="flex justify-between items-baseline mb-4 z-10 relative">
+                <div id="date-display" class="text-3xl sm:text-4xl font-black tracking-tight drop-shadow-md"></div>
+                <div id="time-display" class="text-4xl sm:text-5xl font-black drop-shadow-md tracking-wider"></div>
+            </div>
+
+            <!-- 幅いっぱいの3段構成インフォメーション -->
+            <div class="flex flex-col gap-2 z-10 relative w-full mb-4">
                 
-                <!-- 右側：時間と天気 -->
-                <div class="flex flex-col gap-1 items-end z-10 w-[45%]">
-                    <div id="time-display" class="text-4xl sm:text-5xl font-black drop-shadow-md tracking-wider"></div>
-                    <div class="bg-white/95 text-gray-700 px-3 py-2 rounded-xl shadow-sm flex flex-col items-end mt-1 w-full max-w-[150px]">
-                        <!-- 大きくした箇所: 天気予報の地域名、天気予報 -->
-                        <div class="flex items-center gap-1.5 font-bold w-full justify-end">
-                            <span id="location-name" class="text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded truncate max-w-[70px]">📍 品川区</span>
-                            <span id="weather-icon" class="text-xl">☀️</span>
-                            <span id="current-temp" class="text-xl">--°C</span>
-                        </div>
-                        <!-- 大きくした箇所: 最高/最低気温・降水確率 -->
-                        <div class="flex items-center gap-2 text-xs text-gray-500 mt-1 justify-end w-full font-bold">
-                            <span title="最低気温">⬇️<span id="min-temp">--</span></span>
-                            <span title="最高気温">⬆️<span id="max-temp">--</span></span>
-                            <span title="降水確率">☔<span id="pop">--</span>%</span>
-                        </div>
+                <!-- 1段目: 今日は何の日 -->
+                <div id="today-badge" class="bg-white/95 text-orange-600 text-sm font-bold px-4 py-2.5 rounded-xl shadow-sm w-full"></div>
+                
+                <!-- 2段目: 24節気 -->
+                <div id="sekki-badge" class="bg-white/95 text-green-700 text-sm font-bold px-4 py-2.5 rounded-xl shadow-sm w-full"></div>
+                
+                <!-- 3段目: 天気予報 -->
+                <div class="bg-white/95 text-gray-700 px-4 py-2.5 rounded-xl shadow-sm flex items-center justify-between w-full">
+                    <div class="flex items-center gap-2 font-bold">
+                        <span id="location-name" class="text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded">📍 品川区</span>
+                        <span id="weather-icon" class="text-xl">☀️</span>
+                        <span id="current-temp" class="text-xl">--°C</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-gray-500 font-bold">
+                        <span title="最低気温">⬇️<span id="min-temp">--</span></span>
+                        <span title="最高気温">⬆️<span id="max-temp">--</span></span>
+                        <span title="降水確率">☔<span id="pop">--</span>%</span>
                     </div>
                 </div>
             </div>
 
             <!-- 応援隊バッジ -->
-            <div class="mt-4 bg-white/20 rounded-2xl p-3 flex items-center justify-between backdrop-blur-sm border border-white/30 z-10 relative">
+            <div class="bg-white/20 rounded-2xl p-3 flex items-center justify-between backdrop-blur-sm border border-white/30 z-10 relative">
                  <div class="flex flex-col">
                      <span class="text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full self-start mb-1 shadow-sm font-bold">📣こんげつのおうえんたい</span>
                      <span id="mascot-name" class="font-bold text-sm drop-shadow-sm"></span>
@@ -143,7 +139,6 @@
     <canvas id="confetti" class="fixed inset-0 pointer-events-none z-40"></canvas>
 
     <script>
-        // デフォルトデータ
         const defaultTasks = [
             { id: 1, text: "トイレ・かおあらい", time: 5, checked: false },
             { id: 2, text: "きがえ", time: 10, checked: false },
@@ -152,7 +147,6 @@
             { id: 5, text: "🚪 しゅっぱつ", time: 5, checked: false }
         ];
 
-        // 状態管理
         let appData = {
             tasks: [],
             startTime: "07:00",
@@ -161,14 +155,12 @@
         };
         let isDoingId = null;
 
-        // データ読み込み＆リセット処理
         function loadData() {
             const saved = localStorage.getItem('oshitakuData');
             const todayStr = new Date().toDateString();
 
             if (saved) {
                 appData = JSON.parse(saved);
-                // 翌日になったらチェックと実行中状態をリセット
                 if (appData.lastDate !== todayStr) {
                     appData.tasks.forEach(t => t.checked = false);
                     appData.lastDate = todayStr;
@@ -188,7 +180,6 @@
             localStorage.setItem('oshitakuData', JSON.stringify(appData));
         }
 
-        // 時間計算
         function calculateTimes() {
             const [hours, minutes] = appData.startTime.split(':').map(Number);
             let currentTime = new Date();
@@ -210,20 +201,18 @@
             });
         }
 
-        // やっているよ切り替え
         function toggleDoing(taskId) {
             const task = appData.tasks.find(t => t.id === taskId);
-            if (task.checked) return; // 完了済みの場合は無視
+            if (task.checked) return;
 
             if (isDoingId === taskId) {
-                isDoingId = null; // 解除
+                isDoingId = null; 
             } else {
-                isDoingId = taskId; // セット
+                isDoingId = taskId; 
             }
             renderTasks();
         }
 
-        // タスク描画
         function renderTasks() {
             const list = document.getElementById('task-list');
             list.innerHTML = '';
@@ -236,30 +225,25 @@
                 taskEl.dataset.id = task.id;
 
                 taskEl.innerHTML = `
-                    <!-- 小さくした箇所: 矢印ドラッグハンドル -->
                     <div class="drag-handle flex flex-col items-center justify-center bg-gray-50 rounded-lg py-0.5 px-1 text-gray-400 cursor-grab active:cursor-grabbing w-6">
                         <button onclick="moveTask(${index}, -1)" class="w-full text-center hover:bg-gray-200 rounded pb-0.5 text-[10px]">▲</button>
                         <div class="text-[6px] tracking-widest opacity-50 py-0.5">•••</div>
                         <button onclick="moveTask(${index}, 1)" class="w-full text-center hover:bg-gray-200 rounded pt-0.5 text-[10px]">▼</button>
                     </div>
 
-                    <!-- 小さくした箇所: チェックボタン (w-12 h-12 -> w-8 h-8) -->
                     <button onclick="toggleCheck(${task.id})" class="flex-shrink-0 w-8 h-8 rounded-full border-[3px] flex items-center justify-center transition-colors ${task.checked ? 'border-green-400 bg-green-400' : 'border-gray-200 bg-gray-50'}">
                         ${task.checked ? '<span class="text-white text-xl font-bold">✓</span>' : ''}
                     </button>
 
-                    <!-- 内容 -->
                     <div class="flex-grow flex flex-col pl-1 min-w-0">
                         <span class="font-bold text-lg truncate ${task.checked ? 'line-through text-gray-400' : 'text-gray-800'}">${task.text}</span>
                         <div class="flex items-center gap-2 mt-1">
-                            <!-- 大きくした箇所: 時間変更（目標所要時間） -->
                             <div class="flex items-center bg-gray-100 rounded-lg overflow-hidden whitespace-nowrap w-[5.5rem]">
                                 <button onclick="changeTime(${task.id}, -1)" class="w-6 bg-gray-200 text-gray-600 font-bold active:bg-gray-300">-</button>
                                 <span class="flex-grow text-center text-lg font-bold bg-white">${task.time}<span class="text-[10px] text-gray-500">分</span></span>
                                 <button onclick="changeTime(${task.id}, 1)" class="w-6 bg-gray-200 text-gray-600 font-bold active:bg-gray-300">+</button>
                             </div>
                             
-                            <!-- はじめるボタン -->
                             ${!task.checked ? `
                                 <button onclick="toggleDoing(${task.id})" class="text-xs font-bold px-2 py-1 rounded-lg transition-colors ${isDoing ? 'bg-orange-100 text-orange-600 border border-orange-300' : 'bg-blue-50 text-blue-600 border border-blue-100 active:bg-blue-100'}">
                                     ${isDoing ? '🏃 やっているよ！' : '▶️ はじめる'}
@@ -268,10 +252,8 @@
                         </div>
                     </div>
 
-                    <!-- おわりの時間・削除 -->
                     <div class="flex flex-col items-end gap-1 flex-shrink-0 w-20">
                         <span class="text-[10px] font-bold text-gray-400">おわり</span>
-                        <!-- 大きくした箇所: 計算された終了時刻 -->
                         <span class="target-time text-2xl font-black tracking-tighter ${isDoing ? 'time-doing' : (task.checked ? 'text-gray-400' : 'text-red-500')}">--:--</span>
                         <button onclick="deleteTask(${task.id})" class="text-[10px] text-gray-400 flex items-center gap-1 active:text-red-500">
                             🗑️けす
@@ -283,7 +265,6 @@
             calculateTimes();
         }
 
-        // 順番移動ボタン処理
         function moveTask(index, direction) {
             if (direction === -1 && index > 0) {
                 const temp = appData.tasks[index];
@@ -302,7 +283,6 @@
             const task = appData.tasks.find(t => t.id === id);
             task.checked = !task.checked;
             
-            // 完了にした場合、「やっているよ」を解除してアニメーション
             if (task.checked) {
                 if(isDoingId === id) isDoingId = null;
                 const taskEl = document.querySelector(`[data-id="${id}"]`);
@@ -317,7 +297,7 @@
 
         function changeTime(id, delta) {
             const task = appData.tasks.find(t => t.id === id);
-            task.time = Math.max(1, task.time + delta); // 最低1分
+            task.time = Math.max(1, task.time + delta);
             saveData();
             calculateTimes();
             renderTasks();
@@ -348,7 +328,6 @@
             }
         }
 
-        // 地域設定メニューの開閉
         function toggleSettings() {
             const content = document.getElementById('settings-content');
             const arrow = document.getElementById('settings-arrow');
@@ -361,7 +340,6 @@
             }
         }
 
-        // HeartRails Geo API で郵便番号から地域検索
         async function updateLocationByZip() {
             const zip = document.getElementById('zip-input').value.replace(/-/g, '');
             const msgEl = document.getElementById('zip-message');
@@ -376,7 +354,6 @@
             msgEl.className = "text-xs mt-2 font-bold text-blue-500";
 
             try {
-                // HeartRails Express API (郵便番号から住所・座標を取得)
                 const res = await fetch(`https://geoapi.heartrails.com/api/json?method=searchByPostal&postal=${zip}`);
                 const data = await res.json();
                 
@@ -386,7 +363,6 @@
                     return;
                 }
 
-                // 最初の候補を使用
                 const loc = data.response.location[0];
                 const city = loc.city; 
                 const lat = loc.y;
@@ -399,9 +375,8 @@
                 msgEl.className = "text-xs mt-2 font-bold text-green-600";
                 
                 document.getElementById('location-name').textContent = `📍 ${city}`;
-                fetchWeather(); // 天気を再取得
+                fetchWeather();
                 
-                // 少し待ってから閉じる
                 setTimeout(toggleSettings, 1500);
 
             } catch(e) {
@@ -410,9 +385,6 @@
             }
         }
 
-        // ------------------ 各種UIの更新・API ------------------
-
-        // 天気予報 (Open-Meteo)
         async function fetchWeather() {
             const lat = appData.location.lat;
             const lon = appData.location.lon;
@@ -422,13 +394,11 @@
                 const response = await fetch(url);
                 const data = await response.json();
 
-                // 現在
                 const temp = Math.round(data.current.temperature_2m);
                 const code = data.current.weather_code;
                 document.getElementById('current-temp').textContent = `${temp}°C`;
                 document.getElementById('weather-icon').textContent = getWeatherEmoji(code);
 
-                // 日別（今日）
                 const max = Math.round(data.daily.temperature_2m_max[0]);
                 const min = Math.round(data.daily.temperature_2m_min[0]);
                 const pop = data.daily.precipitation_probability_max[0];
@@ -443,15 +413,14 @@
         }
 
         function getWeatherEmoji(code) {
-            if (code <= 3) return '☀'; // 晴れ/くもり
-            if (code <= 48) return '☁️'; // 霧
-            if (code <= 67) return '☔'; // 雨
-            if (code <= 77) return '⛄'; // 雪
-            if (code <= 99) return '⚡'; // 雷雨
+            if (code <= 3) return '☀'; 
+            if (code <= 48) return '☁️'; 
+            if (code <= 67) return '☔'; 
+            if (code <= 77) return '⛄'; 
+            if (code <= 99) return '⚡'; 
             return '☀️';
         }
 
-        // 記念日・24節気・マスコット・テーマ設定
         function updateDateAndTheme() {
             const now = new Date();
             const month = now.getMonth() + 1;
@@ -459,10 +428,8 @@
             const day = now.getDay();
             const days = ['日', '月', '火', '水', '木', '金', '土'];
             
-            // 1. 日付
             document.getElementById('date-display').textContent = `${month}月${date}日(${days[day]})`;
             
-            // 2. 時計（1分ごとに更新）
             setInterval(() => {
                 const d = new Date();
                 document.getElementById('time-display').textContent = 
@@ -472,7 +439,6 @@
             document.getElementById('time-display').textContent = 
                     `${initialD.getHours()}:${initialD.getMinutes().toString().padStart(2, '0')}`;
 
-            // 3. 記念日バッジ
             const mmdd = `${month.toString().padStart(2, '0')}${date.toString().padStart(2, '0')}`;
             const holidays = {
                 "0101": "おしょうがつ", "0214": "バレンタインデー", "0303": "ひなまつり",
@@ -482,7 +448,6 @@
             const message = holidays[mmdd] ? `きょうは『${holidays[mmdd]}』だよ！` : "きょうも１にち げんきにがんばろう！";
             document.getElementById('today-badge').innerHTML = `💡 ${message}`;
 
-            // 4. 24節気バッジ
             const sekkiList = [
                 {m:2, d:4, n:"立春(りっしゅん)"}, {m:2, d:19, n:"雨水(うすい)"}, {m:3, d:5, n:"啓蟄(けいちつ)"}, {m:3, d:21, n:"春分(しゅんぶん)"},
                 {m:4, d:5, n:"清明(せいめい)"}, {m:4, d:20, n:"穀雨(こくう)"}, {m:5, d:5, n:"立夏(りっか)"}, {m:5, d:21, n:"小満(しょうまん)"},
@@ -500,7 +465,6 @@
             }
             document.getElementById('sekki-badge').innerHTML = `🍃 いまの24節気(にじゅうしせっき)は『${currentSekki}』`;
 
-            // 5. 応援隊マスコット
             const mascots = [
                 {n: "ゆきだるま", e: "⛄❄️"}, {n: "オニとマメ", e: "👹🥜"}, {n: "サクラとメジロ", e: "🌸🐦"},
                 {n: "ランドセル", e: "🎒🌸"}, {n: "コイノボリ", e: "🎏🎏"}, {n: "カエルとアジサイ", e: "🐸☔"},
@@ -510,31 +474,27 @@
             const m = mascots[month - 1];
             document.getElementById('mascot-name').textContent = m.n;
             document.getElementById('mascot-emoji').textContent = m.e;
-            window.currentEmoji = m.e; // ポップアップ用
+            window.currentEmoji = m.e;
 
-            // 6. 曜日ごとのカラーテーマ
             const themes = [
-                { bg: 'bg-red-50', head: 'bg-gradient-to-r from-red-500 to-rose-400' },     // 日
-                { bg: 'bg-yellow-50', head: 'bg-gradient-to-r from-yellow-500 to-amber-500' },// 月
-                { bg: 'bg-pink-50', head: 'bg-gradient-to-r from-pink-400 to-rose-400' },   // 火
-                { bg: 'bg-blue-50', head: 'bg-gradient-to-r from-cyan-400 to-blue-500' },   // 水
-                { bg: 'bg-green-50', head: 'bg-gradient-to-r from-emerald-400 to-green-500' }, // 木
-                { bg: 'bg-orange-50', head: 'bg-gradient-to-r from-orange-400 to-amber-500' }, // 金
-                { bg: 'bg-indigo-50', head: 'bg-gradient-to-r from-indigo-400 to-purple-500' } // 土
+                { bg: 'bg-red-50', head: 'bg-gradient-to-r from-red-500 to-rose-400' },
+                { bg: 'bg-yellow-50', head: 'bg-gradient-to-r from-yellow-500 to-amber-500' },
+                { bg: 'bg-pink-50', head: 'bg-gradient-to-r from-pink-400 to-rose-400' },
+                { bg: 'bg-blue-50', head: 'bg-gradient-to-r from-cyan-400 to-blue-500' },
+                { bg: 'bg-green-50', head: 'bg-gradient-to-r from-emerald-400 to-green-500' },
+                { bg: 'bg-orange-50', head: 'bg-gradient-to-r from-orange-400 to-amber-500' },
+                { bg: 'bg-indigo-50', head: 'bg-gradient-to-r from-indigo-400 to-purple-500' }
             ];
             
             document.getElementById('body-bg').className = `min-h-screen font-sans text-gray-800 transition-colors duration-500 pb-10 ${themes[day].bg}`;
             document.getElementById('header-bg').className = `rounded-3xl p-5 text-white shadow-lg transition-colors duration-500 relative overflow-hidden ${themes[day].head}`;
         }
 
-        // --- アニメーション関連 ---
-
         function showPopupEmoji() {
             const popup = document.getElementById('popup-emoji');
             const char = document.getElementById('popup-emoji-char');
             char.textContent = window.currentEmoji;
             
-            // 表示とアニメーション
             popup.classList.remove('opacity-0', 'scale-0');
             popup.classList.add('opacity-100', 'scale-100');
             char.classList.add('animate-jump');
@@ -578,7 +538,7 @@
                     p.tiltAngle += p.tiltAngleInc;
                     p.y += (Math.cos(p.tiltAngle) + 1 + p.r / 2) / 2;
                     p.x += Math.sin(p.tiltAngle) * 2;
-                    p.dy += 0.2; // 重力
+                    p.dy += 0.2; 
                     p.x += p.dx;
                     p.y += p.dy;
 
@@ -596,21 +556,18 @@
             animate();
         }
 
-        // 初期化処理
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
             updateDateAndTheme();
             renderTasks();
             fetchWeather();
 
-            // はじめるじかんの変更検知
             document.getElementById('start-time').addEventListener('change', (e) => {
                 appData.startTime = e.target.value;
                 saveData();
                 calculateTimes();
             });
 
-            // ドラッグ＆ドロップ初期化
             const sortable = new Sortable(document.getElementById('task-list'), {
                 animation: 150,
                 handle: '.drag-handle',
@@ -619,7 +576,7 @@
                     const item = appData.tasks.splice(evt.oldIndex, 1)[0];
                     appData.tasks.splice(evt.newIndex, 0, item);
                     saveData();
-                    renderTasks(); // 時間の再計算と描画
+                    renderTasks(); 
                 },
             });
         });
